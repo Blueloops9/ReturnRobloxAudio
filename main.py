@@ -1,13 +1,16 @@
 import requests as r,os,glob,time
+
+Webserver = "https://darkbluestealth.pythonanywhere.com/static/"
 USER = os.path.expanduser("~")
 
 RobloxLogsDirectory = USER+"\\AppData\\Local\\Roblox\\logs\\*"
 RobloxVersionsDirectory = USER+"\\AppData\\Local\\Roblox\\Versions"
-#RobloxVersions = [x[0] for x in os.walk(BloxstrapInstallment)]
-#RobloxVersion = RobloxVersionDirectories[1] # Sometime studio gets in the way so it's disabled for manual insertion
-SoundsFolder = RobloxVersionsDirectory+"\\"+"version-c1ac69007bdc4e48"+"\\content\\sounds\\"
+RobloxClientVersions = [RobloxVersionsDirectory+"\\"+x for x in os.listdir(RobloxVersionsDirectory) if os.path.isdir(RobloxVersionsDirectory+"\\"+x) and os.path.exists(RobloxVersionsDirectory+"\\"+x+"\\RobloxPlayerBeta.exe")]
+RobloxVersion = max(RobloxClientVersions,key=os.path.getctime)
 
-Logs=glob.glob(RobloxLogsDirectory)
+SoundsFolder = RobloxVersionsDirectory+"\\"+RobloxVersion+"\\content\\sounds\\"
+
+Logs=[x for x in glob.glob(RobloxLogsDirectory) if x.find("Player") > -1]
 LogFile = max(Logs,key=os.path.getctime)
 
 def Follow(File):
@@ -19,18 +22,17 @@ def Follow(File):
             continue
         yield Line
 
+Str = "[FLog::Error] Error: Failed to load sound "
+
 f = open(LogFile,"r")
 Lines = Follow(f)
-Str = "[FLog::Error] Error: Failed to load sound "
 for Line in Lines:
     Dat = Line.find(Str)
     if Dat > -1 and Line.find("rbxasset://") > -1:
         Text=Line[Dat+len(Str):]
         Name = Text[Text.find("sounds/")+7:Text.find(": ")]
-        # The website used for this is only temp for now until I can get something better
-        Dat = r.get("https://darkbluestealth.pythonanywhere.com/static/"+Name,headers={"Accept-Encoding":"gzip"})
-        if Dat.status_code!="404":
-            print("Got data.")
+        Dat = r.get(Webserver+Name,headers={"Accept-Encoding":"gzip"})
+        if Dat.status_code!=404:
             File = open(SoundsFolder+Name,"wb")
             File.write(Dat.content)
             File.close()
