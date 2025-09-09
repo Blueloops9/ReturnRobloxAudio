@@ -1,3 +1,7 @@
+# ReturnRobloxAudio main.py
+# Original draft made by blueloops9
+VERSION = 1.0
+
 import requests as r,os,glob,time,hashlib
 
 Webserver = "https://audio.deathcubed.com/"
@@ -37,7 +41,7 @@ Logs=[x for x in glob.glob(RobloxLogsDirectory) if x.find("Player") > -1]
 LogFile = max(Logs,key=os.path.getctime)
 
 def get(Path,attempt=0):
-    if attempt==3:print("Failed to get "+Path);return 0
+    if attempt==3:print(Path+" hash confirm failed.");return 0
     Data = r.get(Webserver+"Download/"+Path,headers={"Accept-Encoding":"gzip"})
     if Data.content != b'404':
         Hash = hashlib.sha256(Data.content).hexdigest().encode()
@@ -71,6 +75,8 @@ def Follow(File):
         quit()
 
 Str = "[FLog::Error] Error: Failed to load sound "
+
+print("ReturnRobloxAudio v{}".format(VERSION))
 
 f = open(LogFile,"r")
 Lines = Follow(f)
