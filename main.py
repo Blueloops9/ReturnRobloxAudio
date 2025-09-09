@@ -43,7 +43,6 @@ def get(Path,attempt=0):
         Hash = hashlib.sha256(Data.content).hexdigest().encode()
         Hash2 = r.get(Webserver+"Hash/"+Path)
         if Hash2.content != b'404':
-            print(Hash2.content,Hash)
             if Hash2.content==Hash:
                 return Data.content
             else:
