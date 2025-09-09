@@ -1,6 +1,6 @@
-import requests as r,os,glob,time
+import requests as r,os,glob,time,hashlib
 
-Webserver = "https://darkbluestealth.pythonanywhere.com/static/"
+Webserver = "https://audio.deathcubed.com/"
 RobloxLogsDirectory = "\\AppData\\Local\\Roblox\\logs\\"
 RobloxVersionsDirectory = "\\AppData\\Local\\Roblox\\Versions"
 
@@ -36,6 +36,23 @@ if not os.path.exists(SoundsFolder):
 Logs=[x for x in glob.glob(RobloxLogsDirectory) if x.find("Player") > -1]
 LogFile = max(Logs,key=os.path.getctime)
 
+def get(Path,attempt=0):
+    if attempt==3:print("Failed to get "+Path);return 0
+    Data = r.get(Webserver+"Download/"+Path,headers={"Accept-Encoding":"gzip"})
+    if Data.content != b'404':
+        Hash = hashlib.sha256(Data.content).hexdigest().encode()
+        Hash2 = r.get(Webserver+"Hash/"+Path)
+        if Hash2.content != b'404':
+            print(Hash2.content,Hash)
+            if Hash2.content==Hash:
+                return Data.content
+            else:
+                return get(Path,attempt+1)
+        else:
+            return 0
+    else:
+        return 0
+
 def Follow(File):
     try:
         File.seek(0,2)
@@ -64,9 +81,11 @@ for Line in Lines:
         Text=Line[Dat+len(Str):]
         Name = Text[Text.find("ReturnRobloxAudio/")+18:Text.find(": ")]
         print("Found "+Name)
-        Dat = r.get(Webserver+Name,headers={"Accept-Encoding":"gzip"})
-        if Dat.status_code!=404:
+        Dat = get(Name)
+        if Dat!=0:
             print("Saved "+Name)
             File = open(SoundsFolder+Name,"wb")
-            File.write(Dat.content)
+            File.write(Dat)
             File.close()
+        else:
+            print("Failed "+Name)
